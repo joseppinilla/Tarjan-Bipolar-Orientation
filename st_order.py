@@ -1,17 +1,18 @@
 # Bipolar orientation or st-orientation
 # Jose Pinilla
 
-import networkx as nx
-import matplotlib.pyplot as plt
 from doubly import LL
 
 def bipolar_orientation(G, s, t, ST_Num=False):
     ''' Get Bipolar orientation from graph
 
     Params:
-        G - Undirected graph using networkx
+        G - Undirected graph adjacency {<node_name>:[<neighbor_nodes>]}
+        s - S node
+        t - T node
+        ST_Num - (bool) True=Return ST-Numbering (dict), False=Return ST/Bipolar Orientation (adj_dict)
     Returns:
-        H - Directed graph with bipolar orientation using networkx
+        H - Bipolar Orientation graph adjancency {<node_name>:[<neighbor_nodes>]}
 
     '''
     # Graph characterization
@@ -27,7 +28,7 @@ def bipolar_orientation(G, s, t, ST_Num=False):
         pre[v] = current
         low[v] = v
         preorder = preorder + [v]
-        for w in G.neighbors(v):
+        for w in G[v]:
             if pre[w] == 0:
                 dfs(G, w)
                 p[w] = v
@@ -59,17 +60,29 @@ def bipolar_orientation(G, s, t, ST_Num=False):
             nodes[v] = L.insert_after(nodes[p[v]], v)
             sign[p[v]] = minus
 
-    # ST-Orientation
+    # ST-Numbering
     st = {}
     current = 0
     for v in L:
         current += 1
         st[v] = current
+    if ST_Num:
+        return st
 
-    return st
+    # ST-Orientation
+    H = {}
+    for v in G:
+        H[v] = []
+        for u in G[v]:
+            if (st[v]<st[u]):
+                H[v] += u
+    return H
 
 if __name__ == '__main__':
 
+
+    import networkx as nx
+    import matplotlib.pyplot as plt
     # An example from:
     # https://mathscinet.ams.org/mathscinet-getitem?mr=0848212
     edgelist = [
@@ -93,13 +106,10 @@ if __name__ == '__main__':
     G = nx.Graph(edgelist)
     nx.draw(G, with_labels=True)
     plt.show()
-    st_num = bipolar_orientation(G, 's', 't')
-    print(st_num)
-    H = nx.DiGraph()
-    for v in G:
-        for u in G.neighbors(v):
-            if (st_num[v]<st_num[u]):
-                H.add_edge(v,u)
+
+    st_orient = bipolar_orientation(G.adj, 's', 't')
+
+    H = nx.DiGraph(st_orient)
 
     nx.draw(H, with_labels=True)
     plt.show()
